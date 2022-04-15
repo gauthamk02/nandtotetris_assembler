@@ -1,62 +1,101 @@
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 
 public class Parser{
+
+    ArrayList<String> codelist;
     HashMap<String, String> symMap;
     HashMap<String, String> destMap;
     HashMap<String, String> compMap;
     HashMap<String, String> jumpMap;
+    int currLine;
 
-    enum Instruction {
+    enum Command {
         Ainst,
         Cinst,
         Label,
     };
 
-    enum Destcode {
-        
-    }
-    Parser() {
+    Parser(ArrayList<String> codelist) {
+        this.codelist = codelist;
+        currLine = 0;
         initDestMap();
         initCompMap();
         initJumpMap();
         initSymMap();
     }
-    String toAssembly(String code) throws Exception{
+
+    Boolean hasMoreCommands() {
+        if(currLine < codelist.size()) return true;
+        return false;
+    }
+
+    String convertnextCommand() throws Exception{
+        System.out.println(codelist.get(currLine));
+        return toAssembly(codelist.get(currLine++));
+    }
+    
+    private String toAssembly(String code) throws Exception{
         String asm = "";
-        Instruction inst = identifyInstruction(code);
-        if(inst == Instruction.Cinst) {
+        Command inst = identifyCommand(code);
+        if(inst == Command.Cinst) {
             asm = "111";
             asm += parseComp(code); 
             asm += parseDest(code);
             asm += parseJump(code);
 
         }
-        else if (inst == Instruction.Ainst) {
-            asm += "0";
-            String sym = code.replace("@", "");
-            if(symMap.containsKey(sym)) {
-                asm += symMap.get(sym);
-            }
-            else if(sym.chars().allMatch(Character::isDigit)) {
-                sym = Integer.toBinaryString(Integer.parseInt(sym));
-                asm += String.join("", Collections.nCopies(15 - sym.length(), "0")) + sym;
-            }
-            else {
-                throw new Exception("Unidentified Symbol");
-            }
+        else if (inst == Command.Ainst) {
+            asm = parseAinst(code);
         }
         return asm;
     }
 
-    Instruction identifyInstruction(String code) {
-        if(code.charAt(0) == '@') {
-            return Instruction.Ainst;
+    void readLabels() throws Exception{
+        for(int i  = 0; i < codelist.size(); i++) {
+            String code = codelist.get(i);
+            if (identifyCommand(code) == Command.Label) {
+                String label = code.replace("(", "");
+                label = label.replace(")", "");
+                if(symMap.containsKey(label)) {
+                    throw new Exception("Duplicate label " + label + " at line " + (i + 1));
+                }
+                symMap.put(label, Integer.toString(i));
+                codelist.remove(i--);
+            }
         }
-        else return Instruction.Cinst;
     }
 
-    String parseDest(String code) {
+    private String parseAinst(String code) throws Exception {
+        String cinst = "0";
+        String sym = code.replace("@", "");
+        if(symMap.containsKey(sym)) {
+            sym = symMap.get(sym);
+            sym = Integer.toBinaryString(Integer.parseInt(sym));
+            cinst += String.join("", Collections.nCopies(15 - sym.length(), "0")) + sym;
+        }
+        else if(sym.chars().allMatch(Character::isDigit)) {
+            sym = Integer.toBinaryString(Integer.parseInt(sym));
+            cinst += String.join("", Collections.nCopies(15 - sym.length(), "0")) + sym;
+        }
+        else {
+            throw new Exception("Unidentified Symbol: " + code + " at line " + currLine);
+        }
+        return cinst;
+    }
+
+    private Command identifyCommand(String code) {
+        if(code.charAt(0) == '@') {
+            return Command.Ainst;
+        }
+        else if(code.charAt(0) == '(') {
+            return Command.Label;
+        }
+        else return Command.Cinst;
+    }
+
+    private String parseDest(String code) {
         if(!code.contains("=")) {
             return destMap.get("null");
         }
@@ -65,7 +104,7 @@ public class Parser{
         return destMap.get(dest);
     }
 
-    String parseComp(String code){
+    private String parseComp(String code){
         String asm = "";
         String comp;
         char abit = '0';
@@ -79,7 +118,6 @@ public class Parser{
             endind = code.indexOf(";");
         }
         comp = code.substring(startind, endind);
-        //System.out.print(comp + " --- ");
         if(comp.contains("M")) abit = '1';
 
         if(abit == '0') {
@@ -95,7 +133,7 @@ public class Parser{
         return asm;
     }
 
-    String parseJump(String code) {
+    private String parseJump(String code) {
         if(code.contains(";")) {
             String jmp = code.substring(code.indexOf(";") + 1, code.length());
             return jumpMap.get(jmp);
@@ -104,11 +142,34 @@ public class Parser{
         return jumpMap.get("null");
     }
 
-    void initSymMap() {
+    private void initSymMap() {
         symMap = new HashMap<>();
+        symMap.put("SP", "0");
+        symMap.put("LCL", "1");
+        symMap.put("ARG", "2");
+        symMap.put("THIS", "3");
+        symMap.put("THAT", "4");
+        symMap.put("R0", "0");
+        symMap.put("R1", "1");
+        symMap.put("R2", "2");
+        symMap.put("R3", "3");
+        symMap.put("R4", "4");
+        symMap.put("R5", "5");
+        symMap.put("R6", "6");
+        symMap.put("R7", "7");
+        symMap.put("R8", "8");
+        symMap.put("R9", "9");
+        symMap.put("R10", "10");
+        symMap.put("R11", "11");
+        symMap.put("R12", "12");
+        symMap.put("R13", "13");
+        symMap.put("R14", "14");
+        symMap.put("R15", "15");
+        symMap.put("SCREEN", "16384");
+        symMap.put("KBD", "24576");
     }
 
-    void initDestMap() {
+    private void initDestMap() {
         destMap = new HashMap<>();
         destMap.put("null","000");
         destMap.put("M","001");
@@ -120,7 +181,7 @@ public class Parser{
         destMap.put("AMD","111");
     }
 
-    void initCompMap() {
+    private void initCompMap() {
         compMap = new HashMap<>();
         compMap.put("0","101010");
         compMap.put("1","111111");
@@ -142,7 +203,7 @@ public class Parser{
         compMap.put("D|X","010101");
     }
 
-    void initJumpMap() {
+    private void initJumpMap() {
         jumpMap = new HashMap<>();
         jumpMap.put("null","000");
         jumpMap.put("JGT","001");

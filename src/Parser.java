@@ -192,7 +192,7 @@ public class Parser{
         compMap.put("!X","110001");
         compMap.put("-D","001111");
         compMap.put("-X","110011");
-        compMap.put("D+1","001110");
+        compMap.put("D+1","011111");
         compMap.put("X+1","110111");
         compMap.put("D-1","001110");
         compMap.put("X-1","110010");

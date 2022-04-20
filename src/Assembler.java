@@ -1,8 +1,5 @@
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Scanner;
+import java.io.*;
+import java.util.*;
 
 public class Assembler{
     public static void main(String args[]) {
@@ -45,6 +42,7 @@ public class Assembler{
         }
         catch(Exception e) {
             System.out.println(e);
+            System.out.println(e.getStackTrace());
         }
     }
     static void writetoFile(ArrayList<String> list, String filename) throws IOException {

@@ -6,10 +6,13 @@ public class Parser{
 
     ArrayList<String> codelist;
     HashMap<String, String> symMap;
+    HashMap<String, String> labelMap;
+    HashMap<String, String> varMap;
     HashMap<String, String> destMap;
     HashMap<String, String> compMap;
     HashMap<String, String> jumpMap;
     int currLine;
+    int variablePosition;
 
     enum Command {
         Ainst,
@@ -20,6 +23,9 @@ public class Parser{
     Parser(ArrayList<String> codelist) {
         this.codelist = codelist;
         currLine = 0;
+        variablePosition = 0;
+        labelMap = new HashMap<String, String>();
+        varMap = new HashMap<String, String>();
         initDestMap();
         initCompMap();
         initJumpMap();
@@ -59,30 +65,50 @@ public class Parser{
                 String label = code.replace("(", "");
                 label = label.replace(")", "");
                 if(symMap.containsKey(label)) {
+                    throw new Exception("Label name " + label + " at line" + (i + 1) + " already exist as symbol");
+                }
+                if(labelMap.containsKey(label)) {
                     throw new Exception("Duplicate label " + label + " at line " + (i + 1));
                 }
-                symMap.put(label, Integer.toString(i));
+                labelMap.put(label, Integer.toString(i));
                 codelist.remove(i--);
             }
         }
     }
 
     private String parseAinst(String code) throws Exception {
-        String cinst = "0";
-        String sym = code.replace("@", "");
-        if(symMap.containsKey(sym)) {
-            sym = symMap.get(sym);
-            sym = Integer.toBinaryString(Integer.parseInt(sym));
-            cinst += String.join("", Collections.nCopies(15 - sym.length(), "0")) + sym;
+        String hackinst = "0";
+        String Ainst = code.replace("@", "");
+        //@112554....
+        if(Ainst.chars().allMatch(Character::isDigit)) {
+            Ainst = Integer.toBinaryString(Integer.parseInt(Ainst)); ///0000001010111
+            hackinst += String.join("", Collections.nCopies(15 - Ainst.length(), "0")) + Ainst;
         }
-        else if(sym.chars().allMatch(Character::isDigit)) {
-            sym = Integer.toBinaryString(Integer.parseInt(sym));
-            cinst += String.join("", Collections.nCopies(15 - sym.length(), "0")) + sym;
+        //@R0, @R7, @SP....
+        else if(symMap.containsKey(Ainst)) {
+            Ainst = symMap.get(Ainst);
+            Ainst = Integer.toBinaryString(Integer.parseInt(Ainst));
+            hackinst += String.join("", Collections.nCopies(15 - Ainst.length(), "0")) + Ainst;
         }
+        //@LOOP, @STOP....
+        else if(labelMap.containsKey(Ainst)) {
+            Ainst = labelMap.get(Ainst);
+            Ainst = Integer.toBinaryString(Integer.parseInt(Ainst));
+            hackinst += String.join("", Collections.nCopies(15 - Ainst.length(), "0")) + Ainst;
+        }
+        //@i, @x....
+        else if(varMap.containsKey(Ainst)){
+            Ainst = varMap.get(Ainst);
+            Ainst = Integer.toBinaryString(Integer.parseInt(Ainst));
+            hackinst += String.join("", Collections.nCopies(15 - Ainst.length(), "0")) + Ainst;
+        }
+        //new variable
         else {
-            throw new Exception("Unidentified Symbol: " + code + " at line " + currLine);
+            String pos = Integer.toBinaryString(varMap.size());
+            varMap.put(Ainst, Integer.toString(varMap.size()));
+            hackinst += String.join("", Collections.nCopies(15 - pos.length(), "0")) + pos;
         }
-        return cinst;
+        return hackinst;
     }
 
     private Command identifyCommand(String code) {

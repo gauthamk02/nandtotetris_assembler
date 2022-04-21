@@ -104,8 +104,8 @@ public class Parser{
         }
         //new variable
         else {
-            String pos = Integer.toBinaryString(varMap.size());
-            varMap.put(Ainst, Integer.toString(varMap.size()));
+            String pos = Integer.toBinaryString(varMap.size() + 16);
+            varMap.put(Ainst, Integer.toString(varMap.size() + 16));
             hackinst += String.join("", Collections.nCopies(15 - pos.length(), "0")) + pos;
         }
         return hackinst;

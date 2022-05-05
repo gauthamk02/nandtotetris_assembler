@@ -5,12 +5,10 @@ import java.util.HashMap;
 public class Parser{
 
     ArrayList<String> codelist;
-    HashMap<String, String> symMap;
     HashMap<String, String> labelMap;
     HashMap<String, String> varMap;
-    HashMap<String, String> destMap;
-    HashMap<String, String> compMap;
-    HashMap<String, String> jumpMap;
+    InstructionSet instSet;
+
     int currLine;
     int variablePosition;
 
@@ -24,12 +22,9 @@ public class Parser{
         this.codelist = codelist;
         currLine = 0;
         variablePosition = 0;
+        instSet = new InstructionSet();
         labelMap = new HashMap<String, String>();
         varMap = new HashMap<String, String>();
-        initDestMap();
-        initCompMap();
-        initJumpMap();
-        initSymMap();
     }
 
     Boolean hasMoreCommands() {
@@ -64,7 +59,7 @@ public class Parser{
             if (identifyCommand(code) == Command.Label) {
                 String label = code.replace("(", "");
                 label = label.replace(")", "");
-                if(symMap.containsKey(label)) {
+                if(instSet.symMap.containsKey(label)) {
                     throw new Exception("Label name " + label + " at line" + (i + 1) + " already exist as symbol");
                 }
                 if(labelMap.containsKey(label)) {
@@ -85,8 +80,8 @@ public class Parser{
             hackinst += String.join("", Collections.nCopies(15 - Ainst.length(), "0")) + Ainst;
         }
         //@R0, @R7, @SP....
-        else if(symMap.containsKey(Ainst)) {
-            Ainst = symMap.get(Ainst);
+        else if(instSet.symMap.containsKey(Ainst)) {
+            Ainst = instSet.symMap.get(Ainst);
             Ainst = Integer.toBinaryString(Integer.parseInt(Ainst));
             hackinst += String.join("", Collections.nCopies(15 - Ainst.length(), "0")) + Ainst;
         }
@@ -123,11 +118,11 @@ public class Parser{
 
     private String parseDest(String code) {
         if(!code.contains("=")) {
-            return destMap.get("null");
+            return instSet.destMap.get("null");
         }
 
         String dest = code.substring(0, code.indexOf("="));
-        return destMap.get(dest);
+        return instSet.destMap.get(dest);
     }
 
     private String parseComp(String code){
@@ -149,12 +144,12 @@ public class Parser{
         if(abit == '0') {
             asm += "0";
             comp = comp.replace("A", "X");
-            asm += compMap.get(comp);
+            asm += instSet.compMap.get(comp);
         }
         else if(abit == '1') {
             asm += "1";
             comp = comp.replace("M", "X");
-            asm += compMap.get(comp);
+            asm += instSet.compMap.get(comp);
         }
         return asm;
     }
@@ -162,82 +157,9 @@ public class Parser{
     private String parseJump(String code) {
         if(code.contains(";")) {
             String jmp = code.substring(code.indexOf(";") + 1, code.length());
-            return jumpMap.get(jmp);
+            return instSet.jumpMap.get(jmp);
         }
 
-        return jumpMap.get("null");
-    }
-
-    private void initSymMap() {
-        symMap = new HashMap<>();
-        symMap.put("SP", "0");
-        symMap.put("LCL", "1");
-        symMap.put("ARG", "2");
-        symMap.put("THIS", "3");
-        symMap.put("THAT", "4");
-        symMap.put("R0", "0");
-        symMap.put("R1", "1");
-        symMap.put("R2", "2");
-        symMap.put("R3", "3");
-        symMap.put("R4", "4");
-        symMap.put("R5", "5");
-        symMap.put("R6", "6");
-        symMap.put("R7", "7");
-        symMap.put("R8", "8");
-        symMap.put("R9", "9");
-        symMap.put("R10", "10");
-        symMap.put("R11", "11");
-        symMap.put("R12", "12");
-        symMap.put("R13", "13");
-        symMap.put("R14", "14");
-        symMap.put("R15", "15");
-        symMap.put("SCREEN", "16384");
-        symMap.put("KBD", "24576");
-    }
-
-    private void initDestMap() {
-        destMap = new HashMap<>();
-        destMap.put("null","000");
-        destMap.put("M","001");
-        destMap.put("D","010");
-        destMap.put("MD","011");
-        destMap.put("A","100");
-        destMap.put("AM","101");
-        destMap.put("AD","110");
-        destMap.put("AMD","111");
-    }
-
-    private void initCompMap() {
-        compMap = new HashMap<>();
-        compMap.put("0","101010");
-        compMap.put("1","111111");
-        compMap.put("-1","111010");
-        compMap.put("D","001100");
-        compMap.put("X","110000");
-        compMap.put("!D","001101");
-        compMap.put("!X","110001");
-        compMap.put("-D","001111");
-        compMap.put("-X","110011");
-        compMap.put("D+1","011111");
-        compMap.put("X+1","110111");
-        compMap.put("D-1","001110");
-        compMap.put("X-1","110010");
-        compMap.put("D+X","000010");
-        compMap.put("D-X","010011");
-        compMap.put("X-D","000111");
-        compMap.put("D&X","000000");
-        compMap.put("D|X","010101");
-    }
-
-    private void initJumpMap() {
-        jumpMap = new HashMap<>();
-        jumpMap.put("null","000");
-        jumpMap.put("JGT","001");
-        jumpMap.put("JEQ","010");
-        jumpMap.put("JGE","011");
-        jumpMap.put("JLT","100");
-        jumpMap.put("JNE","101");
-        jumpMap.put("JLE","110");
-        jumpMap.put("JMP","111");
+        return instSet.jumpMap.get("null");
     }
 }

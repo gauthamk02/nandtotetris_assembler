@@ -26,8 +26,6 @@ public class Assembler{
                 } 
                 codeFile.add(line.replaceAll("\\s+", ""));
             }
-            
-            //printFile(codeFile);
 
             Parser parser = new Parser(codeFile);
             parser.readLabels();
@@ -44,6 +42,8 @@ public class Assembler{
             System.out.println(e);
             System.out.println(e.getStackTrace());
         }
+
+        System.out.println("Assembly code stored at " + outFilename);
     }
     static void writetoFile(ArrayList<String> list, String filename) throws IOException {
         FileWriter fw = new FileWriter(filename);

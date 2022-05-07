@@ -5,8 +5,8 @@ import java.util.HashMap;
 public class Parser{
 
     ArrayList<String> codelist;
-    HashMap<String, String> labelMap;
-    HashMap<String, String> varMap;
+    HashMap<String, Integer> labelMap;
+    HashMap<String, Integer> varMap;
     InstructionSet instSet;
 
     int currLine;
@@ -23,16 +23,17 @@ public class Parser{
         currLine = 0;
         variablePosition = 0;
         instSet = new InstructionSet();
-        labelMap = new HashMap<String, String>();
-        varMap = new HashMap<String, String>();
+        labelMap = new HashMap<String, Integer>();
+        varMap = new HashMap<String, Integer>();
     }
 
+    //Returns true if there are more commands left to parse
     Boolean hasMoreCommands() {
         if(currLine < codelist.size()) return true;
         return false;
     }
 
-    String convertnextCommand() throws Exception{
+    String convertnextCommand() throws Exception {
         System.out.println(codelist.get(currLine));
         return toAssembly(codelist.get(currLine++));
     }
@@ -45,7 +46,6 @@ public class Parser{
             asm += parseComp(code); 
             asm += parseDest(code);
             asm += parseJump(code);
-
         }
         else if (inst == Command.Ainst) {
             asm = parseAinst(code);
@@ -53,7 +53,7 @@ public class Parser{
         return asm;
     }
 
-    void readLabels() throws Exception{
+    void readLabels() throws Exception {
         for(int i  = 0; i < codelist.size(); i++) {
             String code = codelist.get(i);
             if (identifyCommand(code) == Command.Label) {
@@ -65,7 +65,7 @@ public class Parser{
                 if(labelMap.containsKey(label)) {
                     throw new Exception("Duplicate label " + label + " at line " + (i + 1));
                 }
-                labelMap.put(label, Integer.toString(i));
+                labelMap.put(label, i);
                 codelist.remove(i--);
             }
         }
@@ -74,43 +74,48 @@ public class Parser{
     private String parseAinst(String code) throws Exception {
         String hackinst = "0";
         String Ainst = code.replace("@", "");
-        //@112554....
+        //Constant A-instruction @112554....
         if(Ainst.chars().allMatch(Character::isDigit)) {
-            Ainst = Integer.toBinaryString(Integer.parseInt(Ainst)); ///0000001010111
-            hackinst += String.join("", Collections.nCopies(15 - Ainst.length(), "0")) + Ainst;
+            Ainst = Integer.toBinaryString(Integer.parseInt(Ainst));
+            hackinst += to16bitInstruction(Ainst);
         }
-        //@R0, @R7, @SP....
+        //Predefined symbols @R0, @R7, @SP....
         else if(instSet.symMap.containsKey(Ainst)) {
-            Ainst = instSet.symMap.get(Ainst);
-            Ainst = Integer.toBinaryString(Integer.parseInt(Ainst));
-            hackinst += String.join("", Collections.nCopies(15 - Ainst.length(), "0")) + Ainst;
+            int symval = instSet.symMap.get(Ainst);
+            Ainst = Integer.toBinaryString(symval);
+            hackinst += to16bitInstruction(Ainst);
         }
-        //@LOOP, @STOP....
+        //Labels @LOOP, @STOP....
         else if(labelMap.containsKey(Ainst)) {
-            Ainst = labelMap.get(Ainst);
-            Ainst = Integer.toBinaryString(Integer.parseInt(Ainst));
-            hackinst += String.join("", Collections.nCopies(15 - Ainst.length(), "0")) + Ainst;
+            int labelval = labelMap.get(Ainst);
+            Ainst = Integer.toBinaryString(labelval);
+            hackinst += to16bitInstruction(Ainst);
         }
-        //@i, @x....
-        else if(varMap.containsKey(Ainst)){
-            Ainst = varMap.get(Ainst);
-            Ainst = Integer.toBinaryString(Integer.parseInt(Ainst));
-            hackinst += String.join("", Collections.nCopies(15 - Ainst.length(), "0")) + Ainst;
+        //Variables @i, @x....
+        else if(varMap.containsKey(Ainst)) {
+            int varval = varMap.get(Ainst);
+            Ainst = Integer.toBinaryString(varval);
+            hackinst += to16bitInstruction(Ainst);
         }
-        //new variable
+        //New variable, add to variable map
         else {
             String pos = Integer.toBinaryString(varMap.size() + 16);
-            varMap.put(Ainst, Integer.toString(varMap.size() + 16));
-            hackinst += String.join("", Collections.nCopies(15 - pos.length(), "0")) + pos;
+            varMap.put(Ainst, varMap.size() + 16);
+            hackinst += to16bitInstruction(pos);
         }
         return hackinst;
     }
 
-    private Command identifyCommand(String code) {
+    private String to16bitInstruction(String Ainst) {
+        return String.join("", Collections.nCopies(15 - Ainst.length(), "0")) + Ainst;
+    }
+
+    private Command identifyCommand(String code) throws Exception {
         if(code.charAt(0) == '@') {
             return Command.Ainst;
         }
         else if(code.charAt(0) == '(') {
+            if(code.charAt(code.length() - 1) != ')') throw new Exception("Sytax Error at line " + currLine);
             return Command.Label;
         }
         else return Command.Cinst;
@@ -125,7 +130,7 @@ public class Parser{
         return instSet.destMap.get(dest);
     }
 
-    private String parseComp(String code){
+    private String parseComp(String code) {
         String asm = "";
         String comp;
         char abit = '0';

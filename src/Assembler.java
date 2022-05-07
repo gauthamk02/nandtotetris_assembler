@@ -20,10 +20,13 @@ public class Assembler{
             filein = new Scanner(infile);
             while(filein.hasNextLine()){
                 String line = filein.nextLine();
+                
+                //Remove inline comments and and skip comment lines
                 if(line.startsWith("//") || line.isEmpty()) continue;
                 if(line.contains("//")) {
                     line = line.substring(0, line.indexOf("//"));
                 } 
+
                 codeFile.add(line.replaceAll("\\s+", ""));
             }
 

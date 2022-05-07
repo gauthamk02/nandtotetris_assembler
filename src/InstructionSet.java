@@ -4,7 +4,7 @@ public class InstructionSet {
     HashMap<String, String> destMap;
     HashMap<String, String> compMap;
     HashMap<String, String> jumpMap;
-    HashMap<String, String> symMap;
+    HashMap<String, Integer> symMap;
 
     InstructionSet() {
         initDestMap();
@@ -15,29 +15,29 @@ public class InstructionSet {
 
     private void initSymMap() {
         symMap = new HashMap<>();
-        symMap.put("SP", "0");
-        symMap.put("LCL", "1");
-        symMap.put("ARG", "2");
-        symMap.put("THIS", "3");
-        symMap.put("THAT", "4");
-        symMap.put("R0", "0");
-        symMap.put("R1", "1");
-        symMap.put("R2", "2");
-        symMap.put("R3", "3");
-        symMap.put("R4", "4");
-        symMap.put("R5", "5");
-        symMap.put("R6", "6");
-        symMap.put("R7", "7");
-        symMap.put("R8", "8");
-        symMap.put("R9", "9");
-        symMap.put("R10", "10");
-        symMap.put("R11", "11");
-        symMap.put("R12", "12");
-        symMap.put("R13", "13");
-        symMap.put("R14", "14");
-        symMap.put("R15", "15");
-        symMap.put("SCREEN", "16384");
-        symMap.put("KBD", "24576");
+        symMap.put("SP", 0);
+        symMap.put("LCL", 1);
+        symMap.put("ARG", 2);
+        symMap.put("THIS", 3);
+        symMap.put("THAT", 4);
+        symMap.put("R0", 0);
+        symMap.put("R1", 1);
+        symMap.put("R2", 2);
+        symMap.put("R3", 3);
+        symMap.put("R4", 4);
+        symMap.put("R5", 5);
+        symMap.put("R6", 6);
+        symMap.put("R7", 7);
+        symMap.put("R8", 8);
+        symMap.put("R9", 9);
+        symMap.put("R10", 10);
+        symMap.put("R11", 11);
+        symMap.put("R12", 12);
+        symMap.put("R13", 13);
+        symMap.put("R14", 14);
+        symMap.put("R15", 15);
+        symMap.put("SCREEN", 16384);
+        symMap.put("KBD", 24576);
     }
 
     private void initDestMap() {
